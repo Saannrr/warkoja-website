@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Warkoja</title>
 
+    <!-- Bootstrap -->
+    <!-- <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    /> -->
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,15 +21,24 @@
       rel="stylesheet"
     />
 
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-
     <!-- MyStyle -->
     <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Alpine JS -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- App src-->
+    <script src="src/app.js"></script>
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
   </head>
   <body>
     <!-- Navigation Bar start-->
-    <nav class="navbar">
+    <nav class="navbar" x-data>
       <div class="navbar-logo">
         <a href="#">Warkoja.</a>
       </div>
@@ -35,9 +52,14 @@
 
       <div class="navbar-extra">
         <a href="#" id="search-button"><i data-feather="search"></i></a>
-        <a href="#" id="shopping-button"
-          ><i data-feather="shopping-cart"></i
-        ></a>
+        <a href="#" id="shopping-button">
+          <i data-feather="shopping-cart"></i>
+          <span
+            class="quantity-badge"
+            x-show="$store.cart.quantity"
+            x-text="$store.cart.quantity"
+          ></span>
+        </a>
         <a href="#" id="hamburger-menu"><i data-feather="menu"></i></a>
       </div>
 
@@ -50,29 +72,56 @@
 
       <!-- Shopping Cart Start -->
       <div class="shopping-cart">
-        <div class="cart-item">
-          <img src="img/menu-img/menu1.jpeg" alt="Product 1" />
-          <div class="item-detail">
-            <h3>Product 1</h3>
-            <div class="item-price">IDR 3k</div>
-            <i data-feather="trash-2" class="remove-item"></i>
+        <template x-for="(item, index) in $store.cart.items" x-keys="index">
+          <div class="cart-item">
+            <img :src="`img/menu-img/${item.img}`" :alt="item.name" />
+            <div class="item-detail">
+              <h3 x-text="item.name"></h3>
+              <div class="item-price">
+                <span x-text="rupiah(item.price)"></span> &times;
+                <button id="remove" @click="$store.cart.remove(item.id)">
+                  &minus;
+                </button>
+                <span x-text="item.quantity"></span>
+                <button id="add" @click="$store.cart.add(item)">&plus;</button>
+                &equals;
+                <span x-text="rupiah(item.total)"></span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="cart-item">
-          <img src="img/menu-img/menu1.jpeg" alt="Product 1" />
-          <div class="item-detail">
-            <h3>Product 1</h3>
-            <div class="item-price">IDR 3k</div>
-            <i data-feather="trash-2" class="remove-item"></i>
-          </div>
-        </div>
-        <div class="cart-item">
-          <img src="img/menu-img/menu1.jpeg" alt="Product 1" />
-          <div class="item-detail">
-            <h3>Product 1</h3>
-            <div class="item-price">IDR 3k</div>
-            <i data-feather="trash-2" class="remove-item"></i>
-          </div>
+        </template>
+        <h4 x-show="!$store.cart.items.length" style="margin-top: 1rem">
+          Cart is empty
+        </h4>
+        <h4 x-show="$store.cart.items.length">
+          Total : <span x-text="rupiah($store.cart.total)"></span>
+        </h4>
+
+        <div class="form-container" x-show="$store.cart.items.length">
+          <form action="" id="checkoutForm">
+            <h5>Customer Detail</h5>
+
+            <label for="name">
+              <span>Nama</span>
+              <input type="text" name="name" id="name" />
+            </label>
+            <label for="email">
+              <span>E-mail</span>
+              <input type="text" name="email" id="email" />
+            </label>
+            <label for="phone">
+              <span>Phone</span>
+              <input type="text" name="phone" id="phone" />
+            </label>
+            <button
+              class="checkout-button"
+              type="submit"
+              id="checkout-button"
+              value="checkout"
+            >
+              Checkout
+            </button>
+          </form>
         </div>
       </div>
       <!-- Shopping Cart End -->
@@ -87,7 +136,7 @@
           Lorem ipsum, dolor sit amet consectetur adipisicing elit. Iste,
           ducimus.
         </p>
-        <a href="#" class="cta">Beli Kopi Sekarang</a>
+        <a href="#menu" class="cta">Beli Kopi Sekarang</a>
       </main>
     </section>
     <!-- Hero Section End -->
@@ -116,7 +165,7 @@
     <!-- About Section End -->
 
     <!-- Menu Section Start -->
-    <section id="menu" class="menu">
+    <section id="menu" class="menu" x-data="menus">
       <h2>Menu <span>Kita</span></h2>
       <p>
         Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad ratione
@@ -124,134 +173,139 @@
       </p>
 
       <div id="row" class="row">
-        <div class="menu-card">
-          <img
-            src="img/menu-img/menu1.jpeg"
-            alt="Kapal Api"
-            class="menu-card-img"
-          />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star"></i>
+        <template x-for="(item,  index) in items" x-key="index">
+          <div class="menu-card">
+            <img
+              :src="`img/menu-img/${item.img}`"
+              :alt="item.name"
+              class="menu-card-img"
+            />
+            <div class="product-star">
+              <svg
+                id="i-star"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                width="24"
+                height="24"
+                fill="currentcolor"
+                stroke="currentcolor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path
+                  d="M16 2 L20 12 30 12 22 19 25 30 16 23 7 30 10 19 2 12 12 12 Z"
+                />
+              </svg>
+              <svg
+                id="i-star"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                width="24"
+                height="24"
+                fill="currentcolor"
+                stroke="currentcolor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path
+                  d="M16 2 L20 12 30 12 22 19 25 30 16 23 7 30 10 19 2 12 12 12 Z"
+                />
+              </svg>
+              <svg
+                id="i-star"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                width="24"
+                height="24"
+                fill="currentcolor"
+                stroke="currentcolor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path
+                  d="M16 2 L20 12 30 12 22 19 25 30 16 23 7 30 10 19 2 12 12 12 Z"
+                />
+              </svg>
+              <svg
+                id="i-star"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                width="24"
+                height="24"
+                fill="currentcolor"
+                stroke="currentcolor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path
+                  d="M16 2 L20 12 30 12 22 19 25 30 16 23 7 30 10 19 2 12 12 12 Z"
+                />
+              </svg>
+              <svg
+                id="i-star"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                width="24"
+                height="24"
+                fill="currentcolor"
+                stroke="currentcolor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path
+                  d="M16 2 L20 12 30 12 22 19 25 30 16 23 7 30 10 19 2 12 12 12 Z"
+                />
+              </svg>
+            </div>
+            <h3 class="menu-card-title" x-text="item.name"></h3>
+            <p class="menu-price"><span x-text="rupiah(item.price)"></span></p>
+            <div class="menu-icons">
+              <a href="#" @click.prevent="$store.cart.add(item)">
+                <svg
+                  id="i-cart"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentcolor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                >
+                  <path d="M6 6 L30 6 27 19 9 19 M27 23 L10 23 5 2 2 2" />
+                  <circle cx="25" cy="27" r="2" />
+                  <circle cx="12" cy="27" r="2" />
+                </svg>
+              </a>
+              <a href="#" class="item-detail-button"
+                ><svg
+                  id="i-eye"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentcolor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                >
+                  <circle cx="17" cy="15" r="1" />
+                  <circle cx="16" cy="16" r="6" />
+                  <path
+                    d="M2 16 C2 16 7 6 16 6 25 6 30 16 30 16 30 16 25 26 16 26 7 26 2 16 2 16 Z"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
-          <h3 class="menu-card-title">Kapal Api</h3>
-          <p class="menu-price">IDR 3k</p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
-        <div class="menu-card">
-          <img
-            src="img/menu-img/menu2.jpeg"
-            alt="Kapal Api Gula Aren"
-            class="menu-card-img"
-          />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star"></i>
-          </div>
-          <h3 class="menu-card-title">Kapal Api Gula Aren</h3>
-          <p class="menu-price">IDR 3k</p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
-        <div class="menu-card">
-          <img
-            src="img/menu-img/menu3.jpeg"
-            alt="indocafe"
-            class="menu-card-img"
-          />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-          </div>
-          <h3 class="menu-card-title">Indocafe Coffeemix</h3>
-          <p class="menu-price">IDR 3k</p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
-        <div class="menu-card">
-          <img src="img/menu-img/menu4.jpeg" alt="abc" class="menu-card-img" />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-          </div>
-          <h3 class="menu-card-title">ABC Susu</h3>
-          <p class="menu-price">IDR 4k</p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
-        <div class="menu-card">
-          <img
-            src="img/menu-img/menu5.jpeg"
-            alt="Nutrisari"
-            class="menu-card-img"
-          />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-          </div>
-          <h3 class="menu-card-title">Nurdin</h3>
-          <p class="menu-price">IDR 5k</p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
-        <div class="menu-card">
-          <img
-            src="img/menu-img/menu6.jpeg"
-            alt="Temulawak"
-            class="menu-card-img"
-          />
-          <div class="product-star">
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star" class="star-fill"></i>
-            <i data-feather="star"></i>
-          </div>
-          <h3 class="menu-card-title">Temulawak Botol</h3>
-          <p class="menu-price">IDR 5k <span>IDR 7k</span></p>
-          <div class="menu-icons">
-            <a href="#"><i data-feather="shopping-cart"></i></a>
-            <a href="#" class="item-detail-button"
-              ><i data-feather="eye"></i
-            ></a>
-          </div>
-        </div>
+        </template>
       </div>
     </section>
     <!-- Menu Section End -->
@@ -342,11 +396,20 @@
     </div>
     <!-- Modal Box Item Detail End -->
 
+    <!-- another Modal Box model from AI Start-->
+    <!-- another Modal Box model from AI End-->
+
     <!-- feather icons -->
     <script>
       feather.replace();
     </script>
 
+    <!-- Bootstrap JS -->
+    <!-- <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script> -->
     <!-- My JS -->
     <script src="js/script.js"></script>
   </body>

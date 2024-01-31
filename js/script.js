@@ -67,3 +67,5 @@ window.onclick = (e) => {
     itemDetailModal.style.display = "none";
   }
 };
+
+// another JS from AI
